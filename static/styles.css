@@ -15,7 +15,8 @@
   --white: #ffffff;
   --radius: 14px;
   --max-width: 1280px;
-  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+  font-family:
+    "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
   line-height: 1.55;
 }
@@ -29,11 +30,25 @@
 
 body {
   min-height: 100vh;
-  background: radial-gradient(circle at 10% 20%, rgba(16, 185, 129, 0.12), transparent 35%),
-    radial-gradient(circle at 90% 10%, rgba(59, 130, 246, 0.08), transparent 40%),
+  background:
+    radial-gradient(
+      circle at 10% 20%,
+      rgba(16, 185, 129, 0.12),
+      transparent 35%
+    ),
+    radial-gradient(
+    circle at 90% 10%,
+    rgba(59, 130, 246, 0.08),
+    transparent 40%
+  ),
     linear-gradient(180deg, var(--slate-50) 0%, var(--white) 55%, #f6f7fb 100%);
   color: var(--slate-700);
   -webkit-font-smoothing: antialiased;
+}
+
+/* Keep page width stable across tabs by always reserving vertical scrollbar */
+html {
+  overflow-y: scroll;
 }
 
 a {
@@ -47,7 +62,7 @@ main {
 .page {
   max-width: var(--max-width);
   margin: 0 auto;
-  padding: 48px 24px 64px;
+  padding: 12px 24px 64px;
   display: flex;
   flex-direction: column;
   gap: 32px;
@@ -57,7 +72,11 @@ main {
   display: grid;
   gap: 16px;
   border-radius: calc(var(--radius) * 1.2);
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(15, 23, 42, 0.05));
+  background: linear-gradient(
+    135deg,
+    rgba(16, 185, 129, 0.12),
+    rgba(15, 23, 42, 0.05)
+  );
   padding: 40px clamp(24px, 3vw, 48px);
   border: 1px solid rgba(15, 23, 42, 0.06);
   box-shadow: 0 24px 40px -28px rgba(15, 23, 42, 0.45);
@@ -228,7 +247,11 @@ textarea:focus {
   gap: 16px;
   padding: 22px clamp(20px, 2.5vw, 28px);
   border-bottom: 1px solid var(--slate-100);
-  background: linear-gradient(90deg, rgba(15, 23, 42, 0.03), rgba(15, 23, 42, 0.01));
+  background: linear-gradient(
+    90deg,
+    rgba(15, 23, 42, 0.03),
+    rgba(15, 23, 42, 0.01)
+  );
 }
 
 .table-card__title {
@@ -312,7 +335,10 @@ textarea:focus {
   font-weight: 500;
   background: var(--white);
   cursor: default;
-  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease,
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
     box-shadow 0.2s ease;
 }
 
@@ -592,4 +618,3 @@ button.chip {
   gap: 10px;
   background: rgba(248, 250, 252, 0.8);
 }
-

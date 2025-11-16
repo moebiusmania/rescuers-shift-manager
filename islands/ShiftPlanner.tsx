@@ -166,8 +166,23 @@ const qualificationClass = (assignment?: Assignment) => {
   return "badge--both";
 };
 
+const getContrastingTextColor = (hex?: string) => {
+  if (!hex) return "#0f172a";
+  const value = hex.replace("#", "");
+  if (value.length !== 6) return "#0f172a";
+  const r = parseInt(value.slice(0, 2), 16) / 255;
+  const g = parseInt(value.slice(2, 4), 16) / 255;
+  const b = parseInt(value.slice(4, 6), 16) / 255;
+  const toLinear = (c: number) =>
+    c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  const L = 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
+  return L > 0.6 ? "#0f172a" : "#ffffff";
+};
+
 const patternLabel = (offset: 0 | 1) =>
-  offset === 0 ? "Inizia con settimana da 3 giorni" : "Inizia con settimana da 4 giorni";
+  offset === 0
+    ? "Inizia con settimana da 3 giorni"
+    : "Inizia con settimana da 4 giorni";
 
 const weekendLabel = (group: WeekendGroup) =>
   group === "A" ? "Weekend: settimane 1 e 3" : "Weekend: settimane 2 e 4";
@@ -192,13 +207,17 @@ const mondayIndex = (date: Date) => (date.getDay() + 6) % 7;
 const dateKey = (date: Date) => date.toISOString().split("T")[0];
 
 const formatRange = (start: Date, end: Date) =>
-  `${start.toLocaleDateString("it-IT", {
-    month: "short",
-    day: "numeric",
-  })} - ${end.toLocaleDateString("it-IT", {
-    month: "short",
-    day: "numeric",
-  })}`;
+  `${
+    start.toLocaleDateString("it-IT", {
+      month: "short",
+      day: "numeric",
+    })
+  } - ${
+    end.toLocaleDateString("it-IT", {
+      month: "short",
+      day: "numeric",
+    })
+  }`;
 
 const DEFAULT_EMPLOYEES: Employee[] = [
   {
@@ -227,7 +246,7 @@ const DEFAULT_EMPLOYEES: Employee[] = [
   },
   {
     id: "VOL",
-    name: 'Valentina "VOL" Leone',
+    name: "Volontario Demo",
     qualification: "both",
     weekendGroup: "A",
     patternOffset: 0,
@@ -266,9 +285,7 @@ const generateSchedule = ({
   volunteerPreferredDays,
   locationLabels,
 }: GenerateOptions): ScheduleResult => {
-  const parsedStart = startDate
-    ? new Date(`${startDate}T00:00:00`)
-    : undefined;
+  const parsedStart = startDate ? new Date(`${startDate}T00:00:00`) : undefined;
 
   if (!parsedStart || Number.isNaN(parsedStart.getTime())) {
     throw new Error("Seleziona una data di inizio valida.");
@@ -282,12 +299,16 @@ const generateSchedule = ({
 
   const volunteer = employees.find((emp) => emp.isVolunteer);
   if (!volunteer) {
-    throw new Error("Aggiungi il volontario VOL per rispettare le regole di copertura.");
+    throw new Error(
+      "Aggiungi il volontario VOL per rispettare le regole di copertura.",
+    );
   }
 
   const volunteerDaysSet = new Set<DayCode>(volunteerPreferredDays);
   if (volunteerDaysSet.size < 2) {
-    throw new Error("Seleziona almeno due giorni lavorativi per il volontario.");
+    throw new Error(
+      "Seleziona almeno due giorni lavorativi per il volontario.",
+    );
   }
 
   const stats = new Map<string, EmployeeStats>();
@@ -351,9 +372,7 @@ const generateSchedule = ({
             if (daySet.has(emp.id)) return false;
 
             if (!emp.isVolunteer && isWeekend) {
-              return emp.weekendGroup === "A"
-                ? week % 2 === 0
-                : week % 2 === 1;
+              return emp.weekendGroup === "A" ? week % 2 === 0 : week % 2 === 1;
             }
 
             if (emp.isVolunteer) {
@@ -372,8 +391,8 @@ const generateSchedule = ({
 
             const lastDate = stat.lastAssignmentDate;
             if (lastDate) {
-              const diff =
-                (current.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24);
+              const diff = (current.getTime() - lastDate.getTime()) /
+                (1000 * 60 * 60 * 24);
               if (
                 diff === 1 &&
                 stat.lastAssignmentEnd === "22:00" &&
@@ -421,9 +440,10 @@ const generateSchedule = ({
           const selected = prioritized[0];
 
           if (!selected) {
-            const message = `Nessun ${role.toUpperCase()} disponibile per ${location.name} il ${dayName}, settimana ${
-              week + 1
-            }.`;
+            const message =
+              `Nessun ${role.toUpperCase()} disponibile per ${location.name} il ${dayName}, settimana ${
+                week + 1
+              }.`;
             row.issues.push(message);
             alerts.push(message);
             return;
@@ -498,7 +518,9 @@ const generateSchedule = ({
       summary.weeklyCounts.forEach((count, index) => {
         if (count !== 2) {
           alerts.push(
-            `Carico volontario settimana ${index + 1}: ${count} giorno/i. Deve coprire esattamente 2 giorni.`,
+            `Carico volontario settimana ${
+              index + 1
+            }: ${count} giorno/i. Deve coprire esattamente 2 giorni.`,
           );
         }
       });
@@ -518,6 +540,9 @@ const ShiftPlanner = () => {
   const [startDate, setStartDate] = useState<string>(
     toInputDate(getNextMonday()),
   );
+  const [activeTab, setActiveTab] = useState<
+    "dashboard" | "team" | "volunteer" | "locations"
+  >("dashboard");
   const [volunteerDayChoices, setVolunteerDayChoices] = useState<DayCode[]>([
     "mon",
     "fri",
@@ -536,7 +561,7 @@ const ShiftPlanner = () => {
   const ensureVolunteerPresent = (list: Employee[]) => {
     const volunteer =
       list.find((member) => member.isVolunteer || member.id === "VOL") ??
-      DEFAULT_EMPLOYEES.find((member) => member.isVolunteer)!;
+        DEFAULT_EMPLOYEES.find((member) => member.isVolunteer)!;
     const others = list.filter(
       (member) => !(member.isVolunteer || member.id === volunteer.id),
     );
@@ -613,6 +638,13 @@ const ShiftPlanner = () => {
     color: "#10b981",
   });
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditVolunteerOpen, setIsEditVolunteerOpen] = useState(false);
+  const [volunteerForm, setVolunteerForm] = useState<
+    { name: string; color: string }
+  >({
+    name: "Volontario Demo",
+    color: "#f97316",
+  });
 
   const [result, setResult] = useState<ScheduleResult | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
@@ -658,7 +690,7 @@ const ShiftPlanner = () => {
 
   const makeEmployeeId = () =>
     globalThis.crypto?.randomUUID?.() ??
-    `EMP-${Math.random().toString(36).slice(2, 7)}`;
+      `EMP-${Math.random().toString(36).slice(2, 7)}`;
 
   const handleAddEmployee = (event: Event) => {
     event.preventDefault();
@@ -698,12 +730,14 @@ const ShiftPlanner = () => {
 
   const updateEmployee = (
     id: string,
-    updates: Partial<Pick<Employee, "qualification" | "weekendGroup" | "patternOffset">>,
+    updates: Partial<
+      Pick<Employee, "qualification" | "weekendGroup" | "patternOffset">
+    >,
   ) => {
     setTeam((prev) =>
       prev.map((member) =>
-        member.id === id ? { ...member, ...updates } : member,
-      ),
+        member.id === id ? { ...member, ...updates } : member
+      )
     );
   };
 
@@ -725,6 +759,36 @@ const ShiftPlanner = () => {
     setVolunteerDayChoices(VOLUNTEER_DAYS.map((option) => option.code));
   };
 
+  const openEditVolunteer = () => {
+    if (!volunteer) return;
+    setVolunteerForm({
+      name: volunteer.name,
+      color: volunteer.color ?? "#f97316",
+    });
+    setIsEditVolunteerOpen(true);
+  };
+
+  const handleSaveVolunteer = (event: Event) => {
+    event.preventDefault();
+    if (!volunteer) return;
+    const newName = volunteerForm.name.trim() || "Volontario Demo";
+    const newColor = volunteerForm.color || "#f97316";
+    setTeam((prev) =>
+      prev.map((member) =>
+        member.isVolunteer || member.id === "VOL"
+          ? {
+            ...member,
+            name: newName,
+            color: newColor,
+            isVolunteer: true,
+            id: "VOL",
+          }
+          : member
+      )
+    );
+    setIsEditVolunteerOpen(false);
+  };
+
   const handleGenerate = () => {
     setGenerationError(null);
     try {
@@ -732,10 +796,10 @@ const ShiftPlanner = () => {
         employees: team.map((member) =>
           member.isVolunteer
             ? {
-                ...member,
-                volunteerDays: volunteerDayChoices,
-              }
-            : member,
+              ...member,
+              volunteerDays: volunteerDayChoices,
+            }
+            : member
         ),
         startDate,
         volunteerPreferredDays: volunteerDayChoices,
@@ -744,7 +808,9 @@ const ShiftPlanner = () => {
       setResult(generation);
     } catch (error) {
       setGenerationError(
-        error instanceof Error ? error.message : "Impossibile generare la pianificazione.",
+        error instanceof Error
+          ? error.message
+          : "Impossibile generare la pianificazione.",
       );
       setResult(null);
     }
@@ -814,295 +880,621 @@ const ShiftPlanner = () => {
       shift.issues.join("; "),
     ]);
     const csv = toCsv(headers, rows);
-    triggerDownload(`turni_${week.label.toLowerCase().replace(/\s+/g, "_")}.csv`, csv);
+    triggerDownload(
+      `turni_${week.label.toLowerCase().replace(/\s+/g, "_")}.csv`,
+      csv,
+    );
   };
 
   return (
-    <div class="layout">
-      <aside class="panel">
-        <header class="panel__header">
-          <div>
-            <h2 class="panel__title">Dati di pianificazione</h2>
+    <div class="page" style="gap: 20px;">
+      <section class="hero">
+        <span class="pill">Sistema gestione turni</span>
+        <h1 class="hero__title">Genera turni senza conflitti.</h1>
+        <p class="hero__subtitle">
+          Automatizza un piano di quattro settimane rispettando l'alternanza dei
+          weekend, la cadenza 3/4 giorni e i vincoli di riposo.
+        </p>
+      </section>
+      <div class="chips" style="justify-content: flex-start;">
+        <button
+          type="button"
+          class={`chip ${activeTab === "dashboard" ? "chip--active" : ""}`}
+          onClick={() => setActiveTab("dashboard")}
+        >
+          Dashboard
+        </button>
+        <button
+          type="button"
+          class={`chip ${activeTab === "team" ? "chip--active" : ""}`}
+          onClick={() => setActiveTab("team")}
+        >
+          Team
+        </button>
+        <button
+          type="button"
+          class={`chip ${activeTab === "volunteer" ? "chip--active" : ""}`}
+          onClick={() => setActiveTab("volunteer")}
+        >
+          Profilo volontario
+        </button>
+        <button
+          type="button"
+          class={`chip ${activeTab === "locations" ? "chip--active" : ""}`}
+          onClick={() => setActiveTab("locations")}
+        >
+          Sedi operative
+        </button>
+      </div>
+
+      {activeTab === "dashboard" && (
+        <section class="schedule-grid">
+          <section class="panel">
+            <header class="panel__header">
+              <div>
+                <h2 class="panel__title">Dati di pianificazione</h2>
+                <p class="panel__subtitle">
+                  Raccogli i dati della squadra e genera una rotazione conforme
+                  di quattro settimane.
+                </p>
+              </div>
+            </header>
+
+            <div class="input-stack">
+              <label>
+                Data di inizio ciclo
+                <input
+                  type="date"
+                  value={startDate}
+                  onInput={(event) =>
+                    setStartDate(
+                      (event.currentTarget as HTMLInputElement).value,
+                    )}
+                />
+                <span class="tagline">
+                  Deve coincidere con un lunedi per rispettare la cadenza
+                  alternata.
+                </span>
+              </label>
+
+              <div class="inline-actions">
+                <button
+                  class="button button--primary"
+                  type="button"
+                  onClick={handleGenerate}
+                >
+                  Genera pianificazione di 4 settimane
+                </button>
+                <button
+                  class="button button--ghost"
+                  type="button"
+                  onClick={() => setResult(null)}
+                >
+                  Pulisci risultati
+                </button>
+              </div>
+              {generationError && <div class="alert">{generationError}</div>}
+            </div>
+          </section>
+
+          <section class="panel">
+            <h3 class="panel__title">Cadenza volontario</h3>
             <p class="panel__subtitle">
-              Raccogli i dati della squadra e genera una rotazione conforme di quattro settimane.
+              Seleziona fino a tre giorni lavorativi a settimana per VOL
+              (Lun/Mer/Ven).
             </p>
-          </div>
-        </header>
-
-        <div class="input-stack">
-          <label>
-            Data di inizio ciclo
-            <input
-              type="date"
-              value={startDate}
-              onInput={(event) =>
-                setStartDate((event.currentTarget as HTMLInputElement).value)}
-            />
-            <span class="tagline">
-              Deve coincidere con un lunedi per rispettare la cadenza alternata.
-            </span>
-          </label>
-
-          <div class="inline-actions">
-            <button
-              class="button button--primary"
-              type="button"
-              onClick={handleGenerate}
-            >
-              Genera pianificazione di 4 settimane
-            </button>
-            <button
-              class="button button--ghost"
-              type="button"
-              onClick={() => setResult(null)}
-            >
-              Pulisci risultati
-            </button>
-          </div>
-          {generationError && <div class="alert">{generationError}</div>}
-        </div>
-
-        <div>
-          <h3 class="panel__title">Cadenza volontario</h3>
-          <p class="panel__subtitle">
-            Seleziona fino a tre giorni lavorativi a settimana per VOL (Lun/Mer/Ven).
-          </p>
-          <div class="chips">
-            {VOLUNTEER_DAYS.map((option) => (
-              <button
-                key={option.code}
-                type="button"
-                class={`chip ${
-                  volunteerDayChoices.includes(option.code) ? "chip--active" : ""
-                }`}
-                onClick={() => toggleVolunteerDay(option.code)}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
-          <div class="inline-actions">
-            <button
-              class="button button--ghost"
-              type="button"
-              onClick={selectAllVolunteerDays}
-            >
-              Seleziona tutti i giorni
-            </button>
-          </div>
-          <p class="tagline muted">
-            Il volontario deve coprire almeno due giorni, ma puo lavorare anche in tutti e tre.
-          </p>
-        </div>
-
-        <div class="panel">
-          <h3 class="panel__title">Aggiungi risorsa</h3>
-          <p class="panel__subtitle">Crea un nuovo dipendente tramite modal dedicata.</p>
-          <button
-            class="button button--ghost"
-            type="button"
-            onClick={() => {
-              setFormError(null);
-              setIsAddModalOpen(true);
-            }}
-          >
-            Nuovo dipendente
-          </button>
-        </div>
-        <Modal
-          open={isAddModalOpen}
-          title="Nuovo dipendente"
-          onClose={() => setIsAddModalOpen(false)}
-          footer={
+            <div class="chips">
+              {VOLUNTEER_DAYS.map((option) => (
+                <button
+                  key={option.code}
+                  type="button"
+                  class={`chip ${
+                    volunteerDayChoices.includes(option.code)
+                      ? "chip--active"
+                      : ""
+                  }`}
+                  onClick={() => toggleVolunteerDay(option.code)}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
             <div class="inline-actions">
               <button
                 class="button button--ghost"
                 type="button"
-                onClick={() => setIsAddModalOpen(false)}
+                onClick={selectAllVolunteerDays}
               >
-                Annulla
-              </button>
-              <button
-                class="button button--primary"
-                type="submit"
-                form="add-employee-form"
-              >
-                Aggiungi
+                Seleziona tutti i giorni
               </button>
             </div>
-          }
-        >
-          <form id="add-employee-form" class="input-stack" onSubmit={handleAddEmployee}>
-            <label>
-              Nome completo
-              <input
-                type="text"
-                value={formValues.name}
-                placeholder="es. Taylor Morgan"
-                onInput={(event) =>
-                  handleFormChange(
-                    "name",
-                    (event.currentTarget as HTMLInputElement).value,
-                  )}
-                autofocus
-              />
-            </label>
-            <label>
-              Colore
-              <input
-                type="color"
-                value={formValues.color}
-                onInput={(event) =>
-                  handleFormChange(
-                    "color",
-                    (event.currentTarget as HTMLInputElement).value,
-                  )}
-              />
-            </label>
-            <label>
-              Qualifica
-              <select
-                value={formValues.qualification}
-                onInput={(event) =>
-                  handleFormChange(
-                    "qualification",
-                    (event.currentTarget as HTMLSelectElement).value,
-                  )}
-              >
-                <option value="both">Autista e RPCO</option>
-                <option value="driver">Solo autista</option>
-                <option value="rpco">Solo RPCO</option>
-              </select>
-            </label>
-            <label>
-              Rotazione weekend
-              <select
-                value={formValues.weekendGroup}
-                onInput={(event) =>
-                  handleFormChange(
-                    "weekendGroup",
-                    (event.currentTarget as HTMLSelectElement).value,
-                  )}
-              >
-                <option value="A">Weekend attivo - settimane 1 e 3</option>
-                <option value="B">Weekend attivo - settimane 2 e 4</option>
-              </select>
-            </label>
-            <label>
-              Cadenza del ciclo
-              <select
-                value={formValues.patternOffset}
-                onInput={(event) =>
-                  handleFormChange(
-                    "patternOffset",
-                    (event.currentTarget as HTMLSelectElement).value,
-                  )}
-              >
-                <option value="0">Inizia con settimana da 3 giorni</option>
-                <option value="1">Inizia con settimana da 4 giorni</option>
-              </select>
-            </label>
-            {formError && <div class="alert">{formError}</div>}
-          </form>
-        </Modal>
+            <p class="tagline muted">
+              Il volontario deve coprire almeno due giorni, ma puo lavorare
+              anche in tutti e tre.
+            </p>
+          </section>
 
-        <div class="panel">
-          <h3 class="panel__title">Squadra principale ({coreTeam.length})</h3>
-          <p class="panel__subtitle">
-            Consigliati 12 dipendenti principali. Regola cadenza e rotazione qui.
-          </p>
-          <div class="list">
-            {coreTeam.map((member) => (
-              <div class="list-item" key={member.id}>
-                <div class="list-item__row">
-                  <div>
-                    <div class="list-item__title">
-                      <span
-                        class="color-dot"
-                        style={`background: ${member.color ?? "#64748b"};`}
-                        aria-hidden="true"
-                      />
-                      {member.name}
+          <section class="panel">
+            <header class="panel__header">
+              <div>
+                <h2 class="panel__title">Panoramica copertura</h2>
+                <p class="panel__subtitle">
+                  Valuta l'equilibrio del personale prima di esportare in Excel
+                  o PDF.
+                </p>
+              </div>
+              {assignmentCoverage !== null && (
+                <span class="pill">{assignmentCoverage}% copertura</span>
+              )}
+            </header>
+
+            <div class="summary-grid">
+              <div class="summary-card">
+                <span class="summary-card__label">Dipendenti principali</span>
+                <span class="summary-card__value">{coreTeam.length}</span>
+                <span class="summary-card__hint">
+                  Include figure polivalenti e solo RPCO.
+                </span>
+              </div>
+              <div class="summary-card">
+                <span class="summary-card__label">Turni volontario</span>
+                <span class="summary-card__value">
+                  {volunteerDayChoices.length}x settimana
+                </span>
+                <span class="summary-card__hint">
+                  Deve restare a 2 giorni come da specifica.
+                </span>
+              </div>
+              <div class="summary-card">
+                <span class="summary-card__label">
+                  Totale ruoli settimanali
+                </span>
+                <span class="summary-card__value">44</span>
+                <span class="summary-card__hint">
+                  22 autista + 22 RPCO.
+                </span>
+              </div>
+            </div>
+          </section>
+
+          {result
+            ? (
+              <>
+                <section class="panel">
+                  <header class="panel__header">
+                    <div>
+                      <h2 class="panel__title">Carico per dipendente</h2>
+                      <p class="panel__subtitle">
+                        Verifica la cadenza 3/4 e gli obblighi weekend a colpo
+                        d'occhio.
+                      </p>
                     </div>
-                    <div class="list-item__meta">
-                      <span class={`badge ${qualificationClass({
-                        employeeId: member.id,
-                        name: member.name,
-                        qualification: member.qualification,
-                      } as Assignment)}`}
-                      >
-                        {qualificationLabel(member.qualification)}
-                      </span>
-                      <span class="chip">{weekendLabel(member.weekendGroup)}</span>
-                      <span class="chip">{patternLabel(member.patternOffset)}</span>
+                  </header>
+
+                  <div class="scroll-x">
+                    <div class="table-wrapper">
+                      <table class="schedule-table">
+                        <thead>
+                          <tr>
+                            <th>Dipendente</th>
+                            <th>Qualifica</th>
+                            <th>Settimana 1</th>
+                            <th>Settimana 2</th>
+                            <th>Settimana 3</th>
+                            <th>Settimana 4</th>
+                            <th>Totale</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {result.employeeSummaries.map((summary) => (
+                            <tr key={summary.id}>
+                              <td>{summary.name}</td>
+                              <td>
+                                {qualificationLabel(summary.qualification)}
+                              </td>
+                              {summary.weeklyCounts.map((count, index) => (
+                                <td key={`${summary.id}-w${index + 1}`}>
+                                  {count}
+                                </td>
+                              ))}
+                              <td>{summary.total}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
-                  <button
-                    class="button button--ghost"
-                    type="button"
-                    onClick={() => removeEmployee(member.id)}
-                  >
-                    Rimuovi
-                  </button>
+                  <div class="inline-actions">
+                    <button
+                      class="button button--ghost"
+                      type="button"
+                      onClick={handleDownloadSummaryCsv}
+                    >
+                      Scarica CSV
+                    </button>
+                  </div>
+                </section>
+
+                {result.weeks.map((week) => (
+                  <div class="table-card" key={week.weekIndex}>
+                    <header class="table-card__header">
+                      <div>
+                        <h3 class="table-card__title">{week.label}</h3>
+                        <p class="panel__subtitle">{week.range}</p>
+                      </div>
+                      <div class="legend">
+                        <span class="legend__item">
+                          <span class="legend__dot legend__dot--driver" />
+                          Autista
+                        </span>
+                        <span class="legend__item">
+                          <span class="legend__dot legend__dot--rpco" />
+                          RPCO
+                        </span>
+                        <span class="legend__item">
+                          <span class="legend__dot legend__dot--volunteer" />
+                          Volontario
+                        </span>
+                      </div>
+                    </header>
+
+                    <div class="scroll-x">
+                      <div class="table-wrapper">
+                        <table class="schedule-table">
+                          <thead>
+                            <tr>
+                              <th>Giorno</th>
+                              <th>Sede</th>
+                              <th>Turno</th>
+                              <th>Autista</th>
+                              <th>RPCO</th>
+                              <th>Note</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {week.shifts.map((shift) => (
+                              <tr key={shift.id}>
+                                <td>{shift.dayLabel}</td>
+                                <td>{shift.locationName}</td>
+                                <td>
+                                  {shift.start} - {shift.end}
+                                </td>
+                                <td>
+                                  {shift.driver
+                                    ? (
+                                      <span
+                                        class={`badge ${qualificationClass(shift.driver)}`}
+                                        style={(() => {
+                                          const color = team.find((e) => e.id === shift.driver!.employeeId)?.color;
+                                          if (!color) return undefined;
+                                          const text = getContrastingTextColor(color);
+                                          return { background: color, color: text };
+                                        })()}
+                                      >
+                                        {shift.driver.name}
+                                      </span>
+                                    )
+                                    : <span class="muted">Non assegnato</span>}
+                                </td>
+                                <td>
+                                  {shift.rpco
+                                    ? (
+                                      <span
+                                        class={`badge ${qualificationClass(shift.rpco)}`}
+                                        style={(() => {
+                                          const color = team.find((e) => e.id === shift.rpco!.employeeId)?.color;
+                                          if (!color) return undefined;
+                                          const text = getContrastingTextColor(color);
+                                          return { background: color, color: text };
+                                        })()}
+                                      >
+                                        {shift.rpco.name}
+                                      </span>
+                                    )
+                                    : <span class="muted">Non assegnato</span>}
+                                </td>
+                                <td>
+                                  {shift.issues.length
+                                    ? shift.issues.join("; ")
+                                    : "-"}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                    <p class="table-note">
+                      Regola di riposo applicata: chi termina alle 22:00 non
+                      apre alle 08:00 del giorno seguente. Weekend alternati per
+                      coorte.
+                    </p>
+                    <div class="inline-actions" style="padding: 0 20px 20px;">
+                      <button
+                        class="button button--ghost"
+                        type="button"
+                        onClick={() =>
+                          handleDownloadWeekCsv(week)}
+                      >
+                        Scarica CSV
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </>
+            )
+            : (
+              <div class="table-card">
+                <header class="table-card__header">
+                  <div>
+                    <h3 class="table-card__title">Anteprima pianificazione</h3>
+                    <p class="panel__subtitle">
+                      Genera una rotazione per compilare questa vista con le
+                      assegnazioni.
+                    </p>
+                  </div>
+                </header>
+                <div class="empty-state">
+                  Configura la squadra e premi "Genera pianificazione di 4
+                  settimane" per visualizzare la griglia dei turni.
                 </div>
-                <div class="input-stack">
-                  <label>
-                    Rotazione weekend
-                    <select
-                      value={member.weekendGroup}
-                      onInput={(event) =>
-                        updateEmployee(member.id, {
-                          weekendGroup: (event.currentTarget as HTMLSelectElement)
-                            .value as WeekendGroup,
-                        })}
-                    >
-                      <option value="A">Weekend nelle settimane 1 e 3</option>
-                      <option value="B">Weekend nelle settimane 2 e 4</option>
-                    </select>
-                  </label>
-                  <label>
-                    Cadenza del ciclo
-                    <select
-                      value={member.patternOffset}
-                      onInput={(event) =>
-                        updateEmployee(member.id, {
-                          patternOffset: parseInt(
-                            (event.currentTarget as HTMLSelectElement).value,
-                            10,
-                          ) as 0 | 1,
-                        })}
-                    >
-                      <option value="0">Inizia con settimana da 3 giorni</option>
-                      <option value="1">Inizia con settimana da 4 giorni</option>
-                    </select>
-                  </label>
-                  <label>
-                    Qualifica
-                    <select
-                      value={member.qualification}
-                      onInput={(event) =>
-                        updateEmployee(member.id, {
-                          qualification: (event.currentTarget as HTMLSelectElement)
-                            .value as Qualification,
-                        })}
-                    >
-                      <option value="both">Autista e RPCO</option>
-                      <option value="driver">Solo autista</option>
-                      <option value="rpco">Solo RPCO</option>
-                    </select>
-                  </label>
-                </div>
-              </div>
-            ))}
-            {coreTeam.length === 0 && (
-              <div class="empty-state">
-                Aggiungi il personale principale per iniziare a pianificare i turni.
               </div>
             )}
-          </div>
-        </div>
+          {result && (
+            result?.alerts.length
+              ? (
+                <div class="alerts" style="margin-top: 12px;">
+                  {result.alerts.map((alert) => (
+                    <div class="alert" key={alert}>
+                      {alert}
+                    </div>
+                  ))}
+                </div>
+              )
+              : (
+                <p class="tagline muted" style="margin-top: 12px;">
+                  Nessuna eccezione di conformita rilevata per la configurazione
+                  attuale.
+                </p>
+              )
+          )}
+        </section>
+      )}
 
-        {volunteer && (
+      {activeTab === "team" && (
+        <section class="schedule-grid">
+          <div class="panel">
+            <h3 class="panel__title">Aggiungi risorsa</h3>
+            <p class="panel__subtitle">
+              Crea un nuovo dipendente tramite modal dedicata.
+            </p>
+            <button
+              class="button button--ghost"
+              type="button"
+              onClick={() => {
+                setFormError(null);
+                setIsAddModalOpen(true);
+              }}
+            >
+              Nuovo dipendente
+            </button>
+          </div>
+          <Modal
+            open={isAddModalOpen}
+            title="Nuovo dipendente"
+            onClose={() => setIsAddModalOpen(false)}
+            footer={
+              <div class="inline-actions">
+                <button
+                  class="button button--ghost"
+                  type="button"
+                  onClick={() => setIsAddModalOpen(false)}
+                >
+                  Annulla
+                </button>
+                <button
+                  class="button button--primary"
+                  type="submit"
+                  form="add-employee-form"
+                >
+                  Aggiungi
+                </button>
+              </div>
+            }
+          >
+            <form
+              id="add-employee-form"
+              class="input-stack"
+              onSubmit={handleAddEmployee}
+            >
+              <label>
+                Nome completo
+                <input
+                  type="text"
+                  value={formValues.name}
+                  placeholder="es. Taylor Morgan"
+                  onInput={(event) =>
+                    handleFormChange(
+                      "name",
+                      (event.currentTarget as HTMLInputElement).value,
+                    )}
+                  autofocus
+                />
+              </label>
+              <label>
+                Colore
+                <input
+                  type="color"
+                  value={formValues.color}
+                  onInput={(event) =>
+                    handleFormChange(
+                      "color",
+                      (event.currentTarget as HTMLInputElement).value,
+                    )}
+                />
+              </label>
+              <label>
+                Qualifica
+                <select
+                  value={formValues.qualification}
+                  onInput={(event) =>
+                    handleFormChange(
+                      "qualification",
+                      (event.currentTarget as HTMLSelectElement).value,
+                    )}
+                >
+                  <option value="both">Autista e RPCO</option>
+                  <option value="driver">Solo autista</option>
+                  <option value="rpco">Solo RPCO</option>
+                </select>
+              </label>
+              <label>
+                Rotazione weekend
+                <select
+                  value={formValues.weekendGroup}
+                  onInput={(event) =>
+                    handleFormChange(
+                      "weekendGroup",
+                      (event.currentTarget as HTMLSelectElement).value,
+                    )}
+                >
+                  <option value="A">Weekend attivo - settimane 1 e 3</option>
+                  <option value="B">Weekend attivo - settimane 2 e 4</option>
+                </select>
+              </label>
+              <label>
+                Cadenza del ciclo
+                <select
+                  value={formValues.patternOffset}
+                  onInput={(event) =>
+                    handleFormChange(
+                      "patternOffset",
+                      (event.currentTarget as HTMLSelectElement).value,
+                    )}
+                >
+                  <option value="0">Inizia con settimana da 3 giorni</option>
+                  <option value="1">Inizia con settimana da 4 giorni</option>
+                </select>
+              </label>
+              {formError && <div class="alert">{formError}</div>}
+            </form>
+          </Modal>
+
+          <div class="panel">
+            <h3 class="panel__title">Squadra principale ({coreTeam.length})</h3>
+            <p class="panel__subtitle">
+              Consigliati 12 dipendenti principali. Regola cadenza e rotazione
+              qui.
+            </p>
+            <div class="list">
+              {coreTeam.map((member) => (
+                <div class="list-item" key={member.id}>
+                  <div class="list-item__row">
+                    <div>
+                      <div class="list-item__title">
+                        <span
+                          class="color-dot"
+                          style={`background: ${member.color ?? "#64748b"};`}
+                          aria-hidden="true"
+                        />
+                        {member.name}
+                      </div>
+                      <div class="list-item__meta">
+                        <span
+                          class={`badge ${
+                            qualificationClass({
+                              employeeId: member.id,
+                              name: member.name,
+                              qualification: member.qualification,
+                            } as Assignment)
+                          }`}
+                        >
+                          {qualificationLabel(member.qualification)}
+                        </span>
+                        <span class="chip">
+                          {weekendLabel(member.weekendGroup)}
+                        </span>
+                        <span class="chip">
+                          {patternLabel(member.patternOffset)}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      class="button button--ghost"
+                      type="button"
+                      onClick={() => removeEmployee(member.id)}
+                    >
+                      Rimuovi
+                    </button>
+                  </div>
+                  <div class="input-stack">
+                    <label>
+                      Rotazione weekend
+                      <select
+                        value={member.weekendGroup}
+                        onInput={(event) =>
+                          updateEmployee(member.id, {
+                            weekendGroup:
+                              (event.currentTarget as HTMLSelectElement)
+                                .value as WeekendGroup,
+                          })}
+                      >
+                        <option value="A">Weekend nelle settimane 1 e 3</option>
+                        <option value="B">Weekend nelle settimane 2 e 4</option>
+                      </select>
+                    </label>
+                    <label>
+                      Cadenza del ciclo
+                      <select
+                        value={member.patternOffset}
+                        onInput={(event) =>
+                          updateEmployee(member.id, {
+                            patternOffset: parseInt(
+                              (event.currentTarget as HTMLSelectElement).value,
+                              10,
+                            ) as 0 | 1,
+                          })}
+                      >
+                        <option value="0">
+                          Inizia con settimana da 3 giorni
+                        </option>
+                        <option value="1">
+                          Inizia con settimana da 4 giorni
+                        </option>
+                      </select>
+                    </label>
+                    <label>
+                      Qualifica
+                      <select
+                        value={member.qualification}
+                        onInput={(event) =>
+                          updateEmployee(member.id, {
+                            qualification:
+                              (event.currentTarget as HTMLSelectElement)
+                                .value as Qualification,
+                          })}
+                      >
+                        <option value="both">Autista e RPCO</option>
+                        <option value="driver">Solo autista</option>
+                        <option value="rpco">Solo RPCO</option>
+                      </select>
+                    </label>
+                  </div>
+                </div>
+              ))}
+              {coreTeam.length === 0 && (
+                <div class="empty-state">
+                  Aggiungi il personale principale per iniziare a pianificare i
+                  turni.
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {activeTab === "volunteer" && volunteer && (
+        <section class="schedule-grid">
           <div class="panel">
             <h3 class="panel__title">Profilo volontario</h3>
             <div class="list-item">
@@ -1111,266 +1503,110 @@ const ShiftPlanner = () => {
                   <div class="list-item__title">{volunteer.name}</div>
                   <div class="list-item__meta">
                     <span class="badge badge--volunteer">Volontario</span>
-                    <span class="chip">Lavora esattamente 2 giorni a settimana</span>
+                    <span class="chip">
+                      Lavora esattamente 2 giorni a settimana
+                    </span>
                   </div>
                 </div>
+                <button
+                  class="button button--ghost"
+                  type="button"
+                  onClick={openEditVolunteer}
+                >
+                  Modifica profilo
+                </button>
               </div>
               <p class="tagline muted">
-                Lavora solo nei giorni Lun/Mer/Ven selezionati. Rimuovi dall'elenco per disattivare.
+                Lavora solo nei giorni Lun/Mer/Ven selezionati. Rimuovi
+                dall'elenco per disattivare.
               </p>
             </div>
           </div>
-        )}
-
-        <div class="panel">
-          <h3 class="panel__title">Sedi operative</h3>
-          <p class="panel__subtitle">
-            Personalizza le etichette mostrate nella tabella dei turni.
-          </p>
-          <div class="input-stack">
-            {LOCATIONS.map((location) => (
-              <label key={location.id}>
-                {`Codice sede ${location.id}`}
-                <input
-                  type="text"
-                  value={locationLabels[location.id] ?? ""}
-                  onInput={(event) =>
-                    handleLocationLabelChange(
-                      location.id,
-                      (event.currentTarget as HTMLInputElement).value,
-                    )}
-                />
-              </label>
-            ))}
-          </div>
-        </div>
-      </aside>
-
-      <section class="schedule-grid">
-        <section class="hero">
-          <span class="pill">Sistema gestione turni</span>
-          <h1 class="hero__title">Genera turni senza conflitti.</h1>
-          <p class="hero__subtitle">
-            Automatizza un piano di quattro settimane rispettando l'alternanza dei weekend, la cadenza 3/4 giorni e i vincoli di riposo.
-          </p>
-        </section>
-
-        <section class="panel">
-          <header class="panel__header">
-            <div>
-              <h2 class="panel__title">Panoramica copertura</h2>
-              <p class="panel__subtitle">
-                Valuta l'equilibrio del personale prima di esportare in Excel o PDF.
-              </p>
-            </div>
-            {assignmentCoverage !== null && (
-              <span class="pill">{assignmentCoverage}% copertura</span>
-            )}
-          </header>
-
-          <div class="summary-grid">
-            <div class="summary-card">
-              <span class="summary-card__label">Dipendenti principali</span>
-              <span class="summary-card__value">{coreTeam.length}</span>
-              <span class="summary-card__hint">
-                Include figure polivalenti e solo RPCO.
-              </span>
-            </div>
-            <div class="summary-card">
-              <span class="summary-card__label">Turni volontario</span>
-              <span class="summary-card__value">
-                {volunteerDayChoices.length}x settimana
-              </span>
-              <span class="summary-card__hint">
-                Deve restare a 2 giorni come da specifica.
-              </span>
-            </div>
-            <div class="summary-card">
-              <span class="summary-card__label">Totale ruoli settimanali</span>
-              <span class="summary-card__value">44</span>
-              <span class="summary-card__hint">
-                22 autista + 22 RPCO.
-              </span>
-            </div>
-          </div>
-
-          {result?.alerts.length ? (
-            <div class="alerts">
-              {result.alerts.map((alert) => (
-                <div class="alert" key={alert}>
-                  {alert}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p class="tagline muted">
-              Nessuna eccezione di conformita rilevata per la configurazione attuale.
-            </p>
-          )}
-        </section>
-
-        {result ? (
-          <>
-            <section class="panel">
-              <header class="panel__header">
-                <div>
-                  <h2 class="panel__title">Carico per dipendente</h2>
-                  <p class="panel__subtitle">
-                    Verifica la cadenza 3/4 e gli obblighi weekend a colpo d'occhio.
-                  </p>
-                </div>
-              </header>
-
-              <div class="scroll-x">
-                <div class="table-wrapper">
-                  <table class="schedule-table">
-                    <thead>
-                      <tr>
-                        <th>Dipendente</th>
-                        <th>Qualifica</th>
-                        <th>Settimana 1</th>
-                        <th>Settimana 2</th>
-                        <th>Settimana 3</th>
-                        <th>Settimana 4</th>
-                        <th>Totale</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {result.employeeSummaries.map((summary) => (
-                        <tr key={summary.id}>
-                          <td>{summary.name}</td>
-                          <td>{qualificationLabel(summary.qualification)}</td>
-                          {summary.weeklyCounts.map((count, index) => (
-                            <td key={`${summary.id}-w${index + 1}`}>{count}</td>
-                          ))}
-                          <td>{summary.total}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+          <Modal
+            open={isEditVolunteerOpen}
+            title="Modifica profilo volontario"
+            onClose={() => setIsEditVolunteerOpen(false)}
+            footer={
               <div class="inline-actions">
                 <button
                   class="button button--ghost"
                   type="button"
-                  onClick={handleDownloadSummaryCsv}
+                  onClick={() => setIsEditVolunteerOpen(false)}
                 >
-                  Scarica CSV
+                  Annulla
+                </button>
+                <button
+                  class="button button--primary"
+                  type="submit"
+                  form="edit-volunteer-form"
+                >
+                  Salva
                 </button>
               </div>
-            </section>
+            }
+          >
+            <form
+              id="edit-volunteer-form"
+              class="input-stack"
+              onSubmit={handleSaveVolunteer}
+            >
+              <label>
+                Nome volontario
+                <input
+                  type="text"
+                  value={volunteerForm.name}
+                  onInput={(event) =>
+                    setVolunteerForm((prev) => ({
+                      ...prev,
+                      name: (event.currentTarget as HTMLInputElement).value,
+                    }))}
+                />
+              </label>
+              <label>
+                Colore
+                <input
+                  type="color"
+                  value={volunteerForm.color}
+                  onInput={(event) =>
+                    setVolunteerForm((prev) => ({
+                      ...prev,
+                      color: (event.currentTarget as HTMLInputElement).value,
+                    }))}
+                />
+              </label>
+            </form>
+          </Modal>
+        </section>
+      )}
 
-            {result.weeks.map((week) => (
-              <div class="table-card" key={week.weekIndex}>
-                <header class="table-card__header">
-                  <div>
-                    <h3 class="table-card__title">{week.label}</h3>
-                    <p class="panel__subtitle">{week.range}</p>
-                  </div>
-                  <div class="legend">
-                    <span class="legend__item">
-                      <span class="legend__dot legend__dot--driver" />
-                      Autista
-                    </span>
-                    <span class="legend__item">
-                      <span class="legend__dot legend__dot--rpco" />
-                      RPCO
-                    </span>
-                    <span class="legend__item">
-                      <span class="legend__dot legend__dot--volunteer" />
-                      Volontario
-                    </span>
-                  </div>
-                </header>
-
-                <div class="scroll-x">
-                  <div class="table-wrapper">
-                    <table class="schedule-table">
-                      <thead>
-                        <tr>
-                        <th>Giorno</th>
-                        <th>Sede</th>
-                        <th>Turno</th>
-                        <th>Autista</th>
-                          <th>RPCO</th>
-                        <th>Note</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {week.shifts.map((shift) => (
-                          <tr key={shift.id}>
-                            <td>{shift.dayLabel}</td>
-                            <td>{shift.locationName}</td>
-                            <td>
-                              {shift.start} - {shift.end}
-                            </td>
-                            <td>
-                              {shift.driver ? (
-                                <span
-                                  class={`badge ${qualificationClass(shift.driver)}`}
-                                >
-                                  {shift.driver.name}
-                                </span>
-                              ) : (
-                                <span class="muted">Non assegnato</span>
-                              )}
-                            </td>
-                            <td>
-                              {shift.rpco ? (
-                                <span
-                                  class={`badge ${qualificationClass(shift.rpco)}`}
-                                >
-                                  {shift.rpco.name}
-                                </span>
-                              ) : (
-                                <span class="muted">Non assegnato</span>
-                              )}
-                            </td>
-                            <td>
-                              {shift.issues.length ? shift.issues.join("; ") : "-"}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-                <p class="table-note">
-                  Regola di riposo applicata: chi termina alle 22:00 non apre alle
-                  08:00 del giorno seguente. Weekend alternati per coorte.
-                </p>
-                <div class="inline-actions" style="padding: 0 20px 20px;">
-                  <button
-                    class="button button--ghost"
-                    type="button"
-                    onClick={() => handleDownloadWeekCsv(week)}
-                  >
-                    Scarica CSV
-                  </button>
-                </div>
-              </div>
-            ))}
-          </>
-        ) : (
-          <div class="table-card">
-            <header class="table-card__header">
-              <div>
-              <h3 class="table-card__title">Anteprima pianificazione</h3>
-                <p class="panel__subtitle">
-                Genera una rotazione per compilare questa vista con le assegnazioni.
-                </p>
-              </div>
-            </header>
-            <div class="empty-state">
-              Configura la squadra e premi "Genera pianificazione di 4 settimane" per visualizzare la griglia dei turni.
+      {activeTab === "locations" && (
+        <section class="schedule-grid">
+          <div class="panel">
+            <h3 class="panel__title">Sedi operative</h3>
+            <p class="panel__subtitle">
+              Personalizza le etichette mostrate nella tabella dei turni.
+            </p>
+            <div class="input-stack">
+              {LOCATIONS.map((location) => (
+                <label key={location.id}>
+                  {`Codice sede ${location.id}`}
+                  <input
+                    type="text"
+                    value={locationLabels[location.id] ?? ""}
+                    onInput={(event) =>
+                      handleLocationLabelChange(
+                        location.id,
+                        (event.currentTarget as HTMLInputElement).value,
+                      )}
+                  />
+                </label>
+              ))}
             </div>
           </div>
-        )}
-      </section>
+        </section>
+      )}
     </div>
   );
 };
 
 export default ShiftPlanner;
-
