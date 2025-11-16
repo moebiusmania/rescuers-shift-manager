@@ -354,6 +354,16 @@ button.chip {
   color: var(--slate-900);
 }
 
+.color-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  margin-right: 8px;
+  border: 1px solid rgba(15, 23, 42, 0.15);
+  vertical-align: middle;
+}
+
 .list-item__meta {
   display: flex;
   flex-wrap: wrap;
@@ -522,5 +532,64 @@ button.chip {
   .table-wrapper {
     min-width: 640px;
   }
+}
+
+/* Modal */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+}
+
+.modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(2px);
+}
+
+.modal__dialog {
+  position: relative;
+  width: min(560px, 92vw);
+  margin: 8vh auto;
+  background: var(--white);
+  border-radius: calc(var(--radius) * 1.1);
+  border: 1px solid var(--slate-100);
+  box-shadow: 0 28px 64px -24px rgba(15, 23, 42, 0.5);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  overflow: hidden;
+}
+
+.modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--slate-100);
+  background: var(--slate-50);
+}
+
+.modal__title {
+  font-weight: 600;
+  color: var(--slate-900);
+  font-size: 1.05rem;
+}
+
+.modal__close {
+  padding: 8px 12px;
+}
+
+.modal__body {
+  padding: 18px;
+}
+
+.modal__footer {
+  padding: 14px 18px;
+  border-top: 1px solid var(--slate-100);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  background: rgba(248, 250, 252, 0.8);
 }
 

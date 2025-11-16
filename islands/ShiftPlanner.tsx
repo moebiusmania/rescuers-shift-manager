@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "preact/hooks";
+import Modal from "../components/Modal.tsx";
 
 type Role = "driver" | "rpco";
 type Qualification = "driver" | "rpco" | "both";
@@ -11,6 +12,7 @@ interface Employee {
   qualification: Qualification;
   weekendGroup: WeekendGroup;
   patternOffset: 0 | 1;
+  color?: string;
   isVolunteer?: boolean;
   volunteerDays?: DayCode[];
 }
@@ -205,6 +207,7 @@ const DEFAULT_EMPLOYEES: Employee[] = [
     qualification: "both",
     weekendGroup: "A",
     patternOffset: 0,
+    color: "#10b981",
   },
   {
     id: "EMP-DRIVER",
@@ -212,6 +215,7 @@ const DEFAULT_EMPLOYEES: Employee[] = [
     qualification: "driver",
     weekendGroup: "B",
     patternOffset: 1,
+    color: "#2563eb",
   },
   {
     id: "EMP-RPCO",
@@ -219,6 +223,7 @@ const DEFAULT_EMPLOYEES: Employee[] = [
     qualification: "rpco",
     weekendGroup: "A",
     patternOffset: 1,
+    color: "#db2777",
   },
   {
     id: "VOL",
@@ -226,6 +231,7 @@ const DEFAULT_EMPLOYEES: Employee[] = [
     qualification: "both",
     weekendGroup: "A",
     patternOffset: 0,
+    color: "#f97316",
     isVolunteer: true,
     volunteerDays: ["mon", "wed", "fri"],
   },
@@ -604,7 +610,9 @@ const ShiftPlanner = () => {
     qualification: "both" as Qualification,
     weekendGroup: "A" as WeekendGroup,
     patternOffset: 0 as 0 | 1,
+    color: "#10b981",
   });
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
   const [result, setResult] = useState<ScheduleResult | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
@@ -628,7 +636,7 @@ const ShiftPlanner = () => {
   }, [result]);
 
   const handleFormChange = (
-    key: "name" | "qualification" | "weekendGroup" | "patternOffset",
+    key: "name" | "qualification" | "weekendGroup" | "patternOffset" | "color",
     value: string,
   ) => {
     setFormValues((prev) => {
@@ -640,6 +648,9 @@ const ShiftPlanner = () => {
       }
       if (key === "weekendGroup") {
         return { ...prev, weekendGroup: value as WeekendGroup };
+      }
+      if (key === "color") {
+        return { ...prev, color: value };
       }
       return { ...prev, patternOffset: parseInt(value, 10) as 0 | 1 };
     });
@@ -664,6 +675,7 @@ const ShiftPlanner = () => {
       qualification: formValues.qualification,
       weekendGroup: formValues.weekendGroup,
       patternOffset: formValues.patternOffset,
+      color: formValues.color,
     };
 
     setTeam((prev) => {
@@ -679,7 +691,9 @@ const ShiftPlanner = () => {
       qualification: "both",
       weekendGroup: "A",
       patternOffset: 0,
+      color: "#10b981",
     });
+    setIsAddModalOpen(false);
   };
 
   const updateEmployee = (
@@ -881,9 +895,44 @@ const ShiftPlanner = () => {
           </p>
         </div>
 
-        <form class="panel" onSubmit={handleAddEmployee}>
+        <div class="panel">
           <h3 class="panel__title">Aggiungi risorsa</h3>
-          <div class="input-stack">
+          <p class="panel__subtitle">Crea un nuovo dipendente tramite modal dedicata.</p>
+          <button
+            class="button button--ghost"
+            type="button"
+            onClick={() => {
+              setFormError(null);
+              setIsAddModalOpen(true);
+            }}
+          >
+            Nuovo dipendente
+          </button>
+        </div>
+        <Modal
+          open={isAddModalOpen}
+          title="Nuovo dipendente"
+          onClose={() => setIsAddModalOpen(false)}
+          footer={
+            <div class="inline-actions">
+              <button
+                class="button button--ghost"
+                type="button"
+                onClick={() => setIsAddModalOpen(false)}
+              >
+                Annulla
+              </button>
+              <button
+                class="button button--primary"
+                type="submit"
+                form="add-employee-form"
+              >
+                Aggiungi
+              </button>
+            </div>
+          }
+        >
+          <form id="add-employee-form" class="input-stack" onSubmit={handleAddEmployee}>
             <label>
               Nome completo
               <input
@@ -893,6 +942,19 @@ const ShiftPlanner = () => {
                 onInput={(event) =>
                   handleFormChange(
                     "name",
+                    (event.currentTarget as HTMLInputElement).value,
+                  )}
+                autofocus
+              />
+            </label>
+            <label>
+              Colore
+              <input
+                type="color"
+                value={formValues.color}
+                onInput={(event) =>
+                  handleFormChange(
+                    "color",
                     (event.currentTarget as HTMLInputElement).value,
                   )}
               />
@@ -940,12 +1002,9 @@ const ShiftPlanner = () => {
                 <option value="1">Inizia con settimana da 4 giorni</option>
               </select>
             </label>
-          </div>
-          {formError && <div class="alert">{formError}</div>}
-          <button class="button button--ghost" type="submit">
-            Aggiungi dipendente
-          </button>
-        </form>
+            {formError && <div class="alert">{formError}</div>}
+          </form>
+        </Modal>
 
         <div class="panel">
           <h3 class="panel__title">Squadra principale ({coreTeam.length})</h3>
@@ -957,7 +1016,14 @@ const ShiftPlanner = () => {
               <div class="list-item" key={member.id}>
                 <div class="list-item__row">
                   <div>
-                    <div class="list-item__title">{member.name}</div>
+                    <div class="list-item__title">
+                      <span
+                        class="color-dot"
+                        style={`background: ${member.color ?? "#64748b"};`}
+                        aria-hidden="true"
+                      />
+                      {member.name}
+                    </div>
                     <div class="list-item__meta">
                       <span class={`badge ${qualificationClass({
                         employeeId: member.id,
