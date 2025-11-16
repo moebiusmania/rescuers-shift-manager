@@ -1163,12 +1163,21 @@ const ShiftPlanner = () => {
                                   {shift.driver
                                     ? (
                                       <span
-                                        class={`badge ${qualificationClass(shift.driver)}`}
+                                        class={`badge ${
+                                          qualificationClass(shift.driver)
+                                        }`}
                                         style={(() => {
-                                          const color = team.find((e) => e.id === shift.driver!.employeeId)?.color;
+                                          const color = team.find((e) =>
+                                            e.id === shift.driver!.employeeId
+                                          )?.color;
                                           if (!color) return undefined;
-                                          const text = getContrastingTextColor(color);
-                                          return { background: color, color: text };
+                                          const text = getContrastingTextColor(
+                                            color,
+                                          );
+                                          return {
+                                            background: color,
+                                            color: text,
+                                          };
                                         })()}
                                       >
                                         {shift.driver.name}
@@ -1180,12 +1189,21 @@ const ShiftPlanner = () => {
                                   {shift.rpco
                                     ? (
                                       <span
-                                        class={`badge ${qualificationClass(shift.rpco)}`}
+                                        class={`badge ${
+                                          qualificationClass(shift.rpco)
+                                        }`}
                                         style={(() => {
-                                          const color = team.find((e) => e.id === shift.rpco!.employeeId)?.color;
+                                          const color = team.find((e) =>
+                                            e.id === shift.rpco!.employeeId
+                                          )?.color;
                                           if (!color) return undefined;
-                                          const text = getContrastingTextColor(color);
-                                          return { background: color, color: text };
+                                          const text = getContrastingTextColor(
+                                            color,
+                                          );
+                                          return {
+                                            background: color,
+                                            color: text,
+                                          };
                                         })()}
                                       >
                                         {shift.rpco.name}
