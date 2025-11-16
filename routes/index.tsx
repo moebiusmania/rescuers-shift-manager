@@ -1,6 +1,7 @@
 import { Head } from "fresh/runtime";
 import { define } from "../utils.ts";
 import ShiftPlanner from "../islands/ShiftPlanner.tsx";
+import InstallPrompt from "../islands/InstallPrompt.tsx";
 
 export default define.page(function Home() {
   return (
@@ -15,6 +16,7 @@ export default define.page(function Home() {
       <main class="page">
         <ShiftPlanner />
       </main>
+      <InstallPrompt />
     </>
   );
 });
