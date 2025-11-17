@@ -1,4 +1,5 @@
 import { define } from "../utils.ts";
+import ThemeSwitcher from "../islands/ThemeSwitcher.tsx";
 
 export default define.page(function App({ Component }) {
   return (
@@ -17,6 +18,7 @@ export default define.page(function App({ Component }) {
         <link rel="apple-touch-icon" href="/logo.svg" />
       </head>
       <body>
+        <ThemeSwitcher />
         <Component />
       </body>
     </html>
