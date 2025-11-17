@@ -640,10 +640,11 @@ const ShiftPlanner = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditVolunteerOpen, setIsEditVolunteerOpen] = useState(false);
   const [volunteerForm, setVolunteerForm] = useState<
-    { name: string; color: string }
+    { name: string; color: string; volunteerDays: DayCode[] }
   >({
     name: "Volontario Demo",
     color: "#f97316",
+    volunteerDays: ["mon", "fri"],
   });
 
   const [result, setResult] = useState<ScheduleResult | null>(null);
@@ -764,6 +765,7 @@ const ShiftPlanner = () => {
     setVolunteerForm({
       name: volunteer.name,
       color: volunteer.color ?? "#f97316",
+      volunteerDays: volunteer.volunteerDays ?? volunteerDayChoices,
     });
     setIsEditVolunteerOpen(true);
   };
@@ -773,6 +775,11 @@ const ShiftPlanner = () => {
     if (!volunteer) return;
     const newName = volunteerForm.name.trim() || "Volontario Demo";
     const newColor = volunteerForm.color || "#f97316";
+    // Ensure at least 2 days are selected (fallback to default if somehow less)
+    const newVolunteerDays: DayCode[] = volunteerForm.volunteerDays.length >= 2
+      ? volunteerForm.volunteerDays
+      : (["mon", "fri"] as DayCode[]);
+
     setTeam((prev) =>
       prev.map((member) =>
         member.isVolunteer || member.id === "VOL"
@@ -780,12 +787,14 @@ const ShiftPlanner = () => {
             ...member,
             name: newName,
             color: newColor,
+            volunteerDays: newVolunteerDays,
             isVolunteer: true,
             id: "VOL",
           }
           : member
       )
     );
+    setVolunteerDayChoices(newVolunteerDays);
     setIsEditVolunteerOpen(false);
   };
 
@@ -1522,7 +1531,13 @@ const ShiftPlanner = () => {
                   <div class="list-item__meta">
                     <span class="badge badge--volunteer">Volontario</span>
                     <span class="chip">
-                      Lavora esattamente 2 giorni a settimana
+                      Lavora esattamente {(volunteer.volunteerDays?.length ??
+                          volunteerDayChoices.length) === 1
+                        ? "1 giorno"
+                        : `${
+                          volunteer.volunteerDays?.length ??
+                            volunteerDayChoices.length
+                        } giorni`} a settimana
                     </span>
                   </div>
                 </div>
@@ -1591,6 +1606,48 @@ const ShiftPlanner = () => {
                       color: (event.currentTarget as HTMLInputElement).value,
                     }))}
                 />
+              </label>
+              <label>
+                Giorni disponibili
+                <div class="chips" style="margin-top: 8px;">
+                  {VOLUNTEER_DAYS.map((option) => (
+                    <button
+                      key={option.code}
+                      type="button"
+                      class={`chip ${
+                        volunteerForm.volunteerDays.includes(option.code)
+                          ? "chip--active"
+                          : ""
+                      }`}
+                      onClick={() => {
+                        setVolunteerForm((prev) => {
+                          const exists = prev.volunteerDays.includes(
+                            option.code,
+                          );
+                          if (exists) {
+                            const newDays = prev.volunteerDays.filter(
+                              (day) => day !== option.code,
+                            );
+                            // Ensure at least 2 days are selected
+                            if (newDays.length < 2) {
+                              return prev;
+                            }
+                            return { ...prev, volunteerDays: newDays };
+                          }
+                          return {
+                            ...prev,
+                            volunteerDays: [...prev.volunteerDays, option.code],
+                          };
+                        });
+                      }}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+                <span class="tagline">
+                  Seleziona almeno due giorni lavorativi (Lun/Mer/Ven).
+                </span>
               </label>
             </form>
           </Modal>

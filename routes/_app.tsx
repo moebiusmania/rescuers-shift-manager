@@ -3,7 +3,7 @@ import ThemeSwitcher from "../islands/ThemeSwitcher.tsx";
 
 export default define.page(function App({ Component }) {
   return (
-    <html lang="en">
+    <html lang="it">
       <head>
         <meta charset="utf-8" />
         <meta
