@@ -9,6 +9,10 @@ A web-based planner that generates four-week rotations for rescuers drivers and 
 - Review per-person summaries alongside a shift-by-shift grid to balance workload.
 - Built for internal teams; no authentication or persistence is included yet.
 
+## Data Privacy
+
+This application uses browser `localStorage` to store all data locally on your device. No data is sent to any server, all information remains on the user's computer and is never transmitted over the network.
+
 ## Tech Stack
 
 - Deno 2.5 with the [Fresh 2](https://fresh.deno.dev/) framework.

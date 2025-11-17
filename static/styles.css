@@ -45,6 +45,8 @@
 
 body {
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
   background:
     radial-gradient(
       circle at 10% 20%,
@@ -84,6 +86,12 @@ html {
 
 a {
   color: inherit;
+}
+
+.app-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 main {
@@ -777,4 +785,44 @@ button.chip {
 
 [data-theme="dark"] .theme-switcher__button:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+/* App Footer */
+.app-footer {
+  margin-top: auto;
+  padding: 24px;
+  text-align: center;
+  border-top: 1px solid var(--slate-200);
+  background: var(--slate-50);
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+[data-theme="dark"] .app-footer {
+  background: var(--slate-100);
+  border-color: var(--slate-200);
+}
+
+.app-footer__text {
+  font-size: 0.7rem;
+  color: var(--slate-500);
+  line-height: 1.5;
+  max-width: var(--max-width);
+  margin: 0 auto;
+}
+
+[data-theme="dark"] .app-footer__text {
+  color: var(--slate-400);
+}
+
+.app-footer__text code {
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  background: var(--slate-200);
+  border-radius: 4px;
+  color: var(--slate-700);
+}
+
+[data-theme="dark"] .app-footer__text code {
+  background: var(--slate-200);
+  color: var(--slate-700);
 }
