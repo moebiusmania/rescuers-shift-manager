@@ -47,4 +47,4 @@ This application uses browser `localStorage` to store all data locally on your d
 
 ## License
 
-This project is distributed under the MIT License. See `LICENSE` for full text.
+This project is distributed under the MIT License. See [LICENSE](LICENSE) for full text.
