@@ -18,7 +18,7 @@ Client-only Preact SPA (Bun + Vite + `@preact/preset-vite`), deployed as static 
 
 - `src/main.tsx` renders `<App />` directly into `document.body` (not a `#root` div) and registers the service worker. `src/App.tsx` holds the page shell (theme switcher, `.app-content`, footer); CSS relies on that body-level structure.
 - `src/components/ShiftPlanner.tsx` is essentially the whole app: domain types, the `generateSchedule` algorithm (4-week rotation, 3/4-day cadence via `patternOffset`, alternating weekend groups A/B, a rest rule that forbids a 22:00 finish followed by an 08:00 start, and a single required volunteer `id: "VOL"`), state, tabbed UI, and CSV export. Locations are hard-coded in `LOCATIONS`; only their display labels are user-editable.
-- Persistence is browser `localStorage` only (key `shiftPlannerState`, plus `theme` for the theme switcher). No backend — the README and footer promise that no data leaves the device.
+- Persistence is browser `localStorage` only (key `shiftPlannerState`, plus `theme` for the theme switcher and `installPromptDismissedAt` for the install banner). No backend — the README and footer promise that no data leaves the device.
 
 ### Styles
 
@@ -26,11 +26,21 @@ Two stylesheets, loaded in this order (order matters):
 1. `public/styles.css` — the real app stylesheet, linked statically from `index.html` (not processed by Vite).
 2. `src/styles.css` — a small reset/utility sheet imported from `main.tsx` and bundled by Vite.
 
+The Inter font is self-hosted: WOFF2 files downloaded from Bunny Fonts (latin + latin-ext subsets, weights 400–700) live in `src/fonts/` with their `@font-face` rules in `src/fonts/inter.css`, imported from `main.tsx` so Vite bundles them with hashed names. Don't reintroduce a remote font `@import`; the app makes no third-party requests.
+
 Theming uses `[data-theme="dark"]` on `<html>` overriding CSS custom properties in `:root`. Use the semantic tokens (`--text-secondary`, `--text-muted`, `--accent-text`, `--accent-strong`, `--control-border`, `--focus-ring`, `--badge-*`) for text, borders, and focus rather than raw `--slate-*`/`--emerald-*` values: they were tuned to meet WCAG 2.1 AA contrast (4.5:1 text, 3:1 UI boundaries) in both themes.
 
 ### Base path
 
-Vite builds with `base: "./"` so the same build works at a domain root or under the Pages sub-path. Keep every asset reference relative: in `index.html` use `/file` (Vite rewrites it), but in `public/manifest.webmanifest` and `public/sw.js` use `./` or bare relative paths, and register the SW with `import.meta.env.BASE_URL`. Bump `CACHE_NAME` in `sw.js` when changing which files it precaches.
+Vite builds with `base: "./"` so the same build works at a domain root or under the Pages sub-path. Keep every asset reference relative: in `index.html` use `/file` (Vite rewrites it), but in `public/manifest.webmanifest` and `public/sw.js` use `./` or bare relative paths, and register the SW with `import.meta.env.BASE_URL`. 
+### PWA
+
+Installable PWA: `public/manifest.webmanifest` (relative `id`/`start_url`/`scope`, PNG icons 192/512 plus a maskable 512) and `public/sw.js`, registered from `main.tsx` in production builds only (`import.meta.env.PROD`), so it never runs under `bun run dev`; test it with `bun run build && bun run preview`.
+
+- `sw.js` is a static file in `public/`, not processed by Vite, so it can't know the hashed bundle names. On install it fetches `./`, reads the `./assets/*` URLs out of the built `index.html` and precaches them along with the static `OFFLINE_URLS`. Fonts and other assets are cached at runtime.
+- Strategy: navigations are network-first (a new deploy shows up on the next load) with the cached app shell as offline fallback; other same-origin GETs are stale-while-revalidate; cross-origin requests and non-OK responses are never cached.
+- Bump `CACHE_NAME` when changing `OFFLINE_URLS` or the caching logic; the activate step deletes old caches.
+- `src/components/InstallPrompt.tsx` shows a custom banner on `beforeinstallprompt` (Chromium) and a manual "Condividi → Aggiungi alla schermata Home" hint on iOS. It stays hidden when already running standalone and for 14 days after a dismissal.
 
 ### Accessibility conventions
 
