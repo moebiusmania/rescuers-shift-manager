@@ -1,10 +1,12 @@
 // Simple offline-first service worker
 const CACHE_NAME = "shift-planner-cache-v1";
+// Paths are relative to the service worker location, so the app works both at
+// the domain root and under a sub-path (e.g. GitHub Pages project sites).
 const OFFLINE_URLS = [
-  "/",
-  "/styles.css",
-  "/favicon.svg",
-  "/logo.svg",
+  "./",
+  "./styles.css",
+  "./favicon.svg",
+  "./logo.svg",
 ];
 
 self.addEventListener("install", (event) => {

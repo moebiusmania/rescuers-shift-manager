@@ -15,36 +15,35 @@ This application uses browser `localStorage` to store all data locally on your d
 
 ## Tech Stack
 
-- Deno 2.5 with the [Fresh 2](https://fresh.deno.dev/) framework.
-- Preact with `@preact/signals` for interactive islands.
-- Vite for local bundling via `@fresh/plugin-vite`.
-- Deployed to Deno Deploy (`moebiusmania/shift-manager`).
+- [Bun](https://bun.sh/) as package manager and script runner.
+- [Vite](https://vite.dev/) for the dev server and production bundling.
+- [Preact](https://preactjs.com/) for the UI, via `@preact/preset-vite`.
+- Deployed to GitHub Pages as a static site.
 
 ## Local Development
 
-1.  Install [Deno](https://deno.land/)
-2.  Clone the repository and install dependencies (handled automatically when tasks run).
+1.  Install [Bun](https://bun.sh/)
+2.  Clone the repository and install dependencies:
+    ```sh
+    bun install
+    ```
 3.  Run the dev server:
     ```sh
-    deno task dev
+    bun run dev
     ```
-4.  Open `http://localhost:3000` and modify files in `routes/` or `islands/`; Fresh reloads changes instantly.
+4.  Open `http://localhost:3000` and modify files in `src/`; Vite reloads changes instantly.
 5.  Run checks before committing:
     ```sh
-    deno task check
+    bun run check
     ```
 
 ## Deployment
 
-- Build the production bundle locally:
+- Build the production bundle locally (output in `dist/`):
   ```sh
-  deno task build
+  bun run build
   ```
-- Deploy to Deno Deploy (requires access to the configured project):
-  ```sh
-  deno deploy --project=shift-manager
-  ```
-  The organization/app mapping is defined in `deno.json` under `deploy`.
+- Every push to `main` triggers the `.github/workflows/deploy.yml` workflow, which builds the app and deploys it to GitHub Pages. In the repository settings, set **Pages → Source** to **GitHub Actions**.
 
 ## License
 

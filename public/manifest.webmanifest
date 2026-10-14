@@ -2,20 +2,20 @@
   "name": "Shift Management Planner",
   "short_name": "Shifts",
   "description": "Genera rotazioni di quattro settimane con controlli di conformità integrati per autisti e RPCO.",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#0b132b",
   "theme_color": "#0b132b",
   "icons": [
     {
-      "src": "/logo.svg",
+      "src": "logo.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
     },
     {
-      "src": "/favicon.svg",
+      "src": "favicon.svg",
       "sizes": "any",
       "type": "image/svg+xml"
     }

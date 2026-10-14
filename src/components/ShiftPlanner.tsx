@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "preact/hooks";
-import Modal from "../components/Modal.tsx";
+import Modal from "./Modal.tsx";
 
 type Role = "driver" | "rpco";
 type Qualification = "driver" | "rpco" | "both";
