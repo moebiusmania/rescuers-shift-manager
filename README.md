@@ -20,6 +20,7 @@ This application uses browser `localStorage` to store all data locally on your d
 - [Bun](https://bun.sh/) as package manager and script runner.
 - [Vite](https://vite.dev/) for the dev server and production bundling.
 - [Preact](https://preactjs.com/) for the UI, via `@preact/preset-vite`.
+- [Inter](https://rsms.me/inter/) font from [Bunny Fonts](https://fonts.bunny.net/), self-hosted and bundled with the app (no third-party requests).
 - Deployed to GitHub Pages as a static site.
 
 ## Local Development
