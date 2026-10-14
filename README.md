@@ -2,6 +2,8 @@
 
 A web-based planner that generates four-week rotations for rescuers drivers and RPCO staff, complete with coverage checks, volunteer preferences, and quick issue alerts. The tool targets operations teams that need to assemble compliant staffing rosters without spreadsheets.
 
+**Live app:** https://moebiusmania.github.io/rescuers-shift-manager/
+
 ## Scope & Features
 
 - Configure employees with qualifications, weekend groups, shift patterns, and volunteer availability.
@@ -43,7 +45,7 @@ This application uses browser `localStorage` to store all data locally on your d
   ```sh
   bun run build
   ```
-- Every push to `main` triggers the `.github/workflows/deploy.yml` workflow, which builds the app and deploys it to GitHub Pages. In the repository settings, set **Pages → Source** to **GitHub Actions**.
+- Every push to `main` triggers the `.github/workflows/deploy.yml` workflow, which builds the app and deploys it to GitHub Pages at https://moebiusmania.github.io/rescuers-shift-manager/. In the repository settings, set **Pages → Source** to **GitHub Actions**.
 
 ## License
 
