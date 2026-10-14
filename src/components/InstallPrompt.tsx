@@ -65,7 +65,7 @@ export default function InstallPrompt() {
         z-index: 1000;
       "
       role="dialog"
-      aria-label="Install app"
+      aria-label="Installa l'app"
     >
       <span>Aggiungi "Shifts manager" alla schermata Home?</span>
       <button

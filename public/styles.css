@@ -13,6 +13,16 @@
   --emerald-600: #059669;
   --emerald-50: #ecfdf5;
   --white: #ffffff;
+  /* Accessible semantic tokens (WCAG 2.1 AA) */
+  --text-secondary: #4f5d73;
+  --text-muted: #5d6b80;
+  --accent-text: #047857;
+  --accent-strong: #047857;
+  --control-border: #7b8aa0;
+  --focus-ring: #047857;
+  --badge-driver: #1d4ed8;
+  --badge-rpco: #be185d;
+  --badge-volunteer: #9a3412;
   --radius: 14px;
   --max-width: 1280px;
   font-family:
@@ -34,6 +44,15 @@
   --emerald-600: #34d399;
   --emerald-50: #064e3b;
   --white: #1e293b;
+  --text-secondary: #94a3b8;
+  --text-muted: #8b9ab0;
+  --accent-text: #34d399;
+  --accent-strong: #34d399;
+  --control-border: #6b7c93;
+  --focus-ring: #34d399;
+  --badge-driver: #93c5fd;
+  --badge-rpco: #f9a8d4;
+  --badge-volunteer: #fdba74;
 }
 
 *,
@@ -144,7 +163,7 @@ main {
 
 .hero__subtitle {
   font-size: 1.125rem;
-  color: var(--slate-500);
+  color: var(--text-secondary);
   max-width: 48ch;
 }
 
@@ -197,7 +216,7 @@ main {
 
 .panel__subtitle {
   font-size: 0.95rem;
-  color: var(--slate-500);
+  color: var(--text-secondary);
 }
 
 .input-stack {
@@ -205,11 +224,13 @@ main {
   gap: 16px;
 }
 
-label {
+label,
+.field,
+.fieldset {
   display: grid;
   gap: 8px;
   font-size: 0.9rem;
-  color: var(--slate-500);
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
@@ -219,7 +240,7 @@ select,
 textarea {
   appearance: none;
   border-radius: 10px;
-  border: 1px solid var(--slate-200);
+  border: 1px solid var(--control-border);
   padding: 12px 14px;
   font: inherit;
   color: var(--slate-700);
@@ -236,9 +257,44 @@ textarea {
 input:focus,
 select:focus,
 textarea:focus {
-  border-color: rgba(16, 185, 129, 0.5);
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+  border-color: var(--focus-ring);
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+  box-shadow: none;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-secondary);
+  opacity: 1;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+.fieldset {
+  border: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.fieldset > legend {
+  padding: 0;
+  margin-bottom: 16px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .pill {
@@ -248,7 +304,7 @@ textarea:focus {
   padding: 10px 14px;
   border-radius: 999px;
   background: var(--emerald-50);
-  color: var(--emerald-600);
+  color: var(--accent-text);
   font-weight: 600;
   font-size: 0.85rem;
   transition: background 0.3s ease, color 0.3s ease;
@@ -256,7 +312,7 @@ textarea:focus {
 
 [data-theme="dark"] .pill {
   background: rgba(16, 185, 129, 0.15);
-  color: var(--emerald-600);
+  color: var(--accent-text);
 }
 
 .button {
@@ -274,7 +330,7 @@ textarea:focus {
 }
 
 .button--primary {
-  background: var(--emerald-600);
+  background: var(--accent-strong);
   color: var(--white);
   box-shadow: 0 14px 24px -12px rgba(5, 150, 105, 0.7);
 }
@@ -377,7 +433,7 @@ textarea:focus {
 
 .schedule-table th {
   font-weight: 600;
-  color: var(--slate-500);
+  color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.02em;
   font-size: 0.75rem;
@@ -399,22 +455,22 @@ textarea:focus {
 
 .badge--driver {
   background: rgba(59, 130, 246, 0.12);
-  color: #2563eb;
+  color: var(--badge-driver);
 }
 
 .badge--rpco {
   background: rgba(236, 72, 153, 0.12);
-  color: #db2777;
+  color: var(--badge-rpco);
 }
 
 .badge--both {
   background: rgba(16, 185, 129, 0.14);
-  color: var(--emerald-600);
+  color: var(--accent-text);
 }
 
 .badge--volunteer {
   background: rgba(249, 115, 22, 0.12);
-  color: #ea580c;
+  color: var(--badge-volunteer);
 }
 
 .chips {
@@ -428,7 +484,7 @@ textarea:focus {
   border-radius: 999px;
   border: 1px solid var(--slate-200);
   font-size: 0.8rem;
-  color: var(--slate-500);
+  color: var(--text-secondary);
   font-weight: 500;
   background: var(--white);
   cursor: default;
@@ -446,14 +502,19 @@ button.chip {
 .chip--active {
   background: rgba(16, 185, 129, 0.12);
   border-color: rgba(16, 185, 129, 0.4);
-  color: var(--emerald-600);
+  color: var(--accent-text);
+  font-weight: 600;
   box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.12);
+}
+
+.chip[aria-pressed="true"]::before {
+  content: "✓ ";
 }
 
 [data-theme="dark"] .chip--active {
   background: rgba(16, 185, 129, 0.2);
   border-color: rgba(16, 185, 129, 0.5);
-  color: var(--emerald-600);
+  color: var(--accent-text);
   box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
 }
 
@@ -508,7 +569,7 @@ button.chip {
 .empty-state {
   padding: 32px;
   text-align: center;
-  color: var(--slate-400);
+  color: var(--text-muted);
   font-size: 0.95rem;
 }
 
@@ -542,7 +603,7 @@ button.chip {
   font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--slate-400);
+  color: var(--text-muted);
   font-weight: 600;
 }
 
@@ -554,7 +615,7 @@ button.chip {
 
 .summary-card__hint {
   font-size: 0.85rem;
-  color: var(--slate-500);
+  color: var(--text-secondary);
 }
 
 .alerts {
@@ -582,7 +643,7 @@ button.chip {
 .week-divider {
   padding: 28px 0 4px;
   font-size: 0.88rem;
-  color: var(--slate-400);
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 600;
@@ -595,7 +656,7 @@ button.chip {
 
 .tagline {
   font-size: 0.9rem;
-  color: var(--slate-500);
+  color: var(--text-secondary);
 }
 
 .role-pill {
@@ -620,7 +681,7 @@ button.chip {
 
 .table-note {
   font-size: 0.85rem;
-  color: var(--slate-400);
+  color: var(--text-muted);
   padding: 16px 20px 20px;
 }
 
@@ -629,7 +690,7 @@ button.chip {
   flex-wrap: wrap;
   gap: 10px;
   font-size: 0.8rem;
-  color: var(--slate-500);
+  color: var(--text-secondary);
 }
 
 .legend__item {
@@ -666,7 +727,7 @@ button.chip {
 }
 
 .muted {
-  color: var(--slate-400);
+  color: var(--text-muted);
 }
 
 .scroll-x {
@@ -727,6 +788,10 @@ button.chip {
   padding: 16px 18px;
   border-bottom: 1px solid var(--slate-100);
   background: var(--slate-50);
+}
+
+.modal__dialog:focus {
+  outline: none;
 }
 
 .modal__title {
@@ -817,14 +882,14 @@ button.chip {
 
 .app-footer__text {
   font-size: 0.7rem;
-  color: var(--slate-500);
+  color: var(--text-secondary);
   line-height: 1.5;
   max-width: var(--max-width);
   margin: 0 auto;
 }
 
 [data-theme="dark"] .app-footer__text {
-  color: var(--slate-400);
+  color: var(--text-muted);
 }
 
 .app-footer__text code {

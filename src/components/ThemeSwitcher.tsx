@@ -26,8 +26,8 @@ export default function ThemeSwitcher() {
         type="button"
         class="theme-switcher__button"
         onClick={toggleTheme}
-        aria-label={`Switch to ${theme === "light" ? "dark" : "light"} theme`}
-        title={`Switch to ${theme === "light" ? "dark" : "light"} theme`}
+        aria-label={`Passa al tema ${theme === "light" ? "scuro" : "chiaro"}`}
+        title={`Passa al tema ${theme === "light" ? "scuro" : "chiaro"}`}
       >
         {theme === "light" ? (
           <svg
@@ -39,6 +39,7 @@ export default function ThemeSwitcher() {
             stroke-width="2"
             stroke-linecap="round"
             stroke-linejoin="round"
+            aria-hidden="true"
           >
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
           </svg>
@@ -52,6 +53,7 @@ export default function ThemeSwitcher() {
             stroke-width="2"
             stroke-linecap="round"
             stroke-linejoin="round"
+            aria-hidden="true"
           >
             <circle cx="12" cy="12" r="5" />
             <line x1="12" y1="1" x2="12" y2="3" />

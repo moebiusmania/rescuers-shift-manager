@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "preact/hooks";
+import { useEffect, useMemo, useRef, useState } from "preact/hooks";
 import Modal from "./Modal.tsx";
 
 type Role = "driver" | "rpco";
@@ -152,6 +152,15 @@ const VOLUNTEER_DAYS: Array<{ code: DayCode; label: string }> = [
   { code: "fri", label: "Venerdi" },
 ];
 
+type TabId = "dashboard" | "team" | "volunteer" | "locations";
+
+const TABS: Array<{ id: TabId; label: string }> = [
+  { id: "dashboard", label: "Dashboard" },
+  { id: "team", label: "Team" },
+  { id: "volunteer", label: "Profilo volontario" },
+  { id: "locations", label: "Sedi operative" },
+];
+
 const qualificationLabel = (qualification: Qualification | "volunteer") => {
   if (qualification === "both") return "Autista e RPCO";
   if (qualification === "volunteer") return "Volontario";
@@ -176,7 +185,11 @@ const getContrastingTextColor = (hex?: string) => {
   const toLinear = (c: number) =>
     c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
   const L = 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
-  return L > 0.6 ? "#0f172a" : "#ffffff";
+  // Pick whichever text color yields the higher contrast ratio.
+  const darkL = 0.0086; // luminance of #0f172a
+  const contrastDark = (L + 0.05) / (darkL + 0.05);
+  const contrastWhite = 1.05 / (L + 0.05);
+  return contrastDark >= contrastWhite ? "#0f172a" : "#ffffff";
 };
 
 const patternLabel = (offset: 0 | 1) =>
@@ -540,9 +553,8 @@ const ShiftPlanner = () => {
   const [startDate, setStartDate] = useState<string>(
     toInputDate(getNextMonday()),
   );
-  const [activeTab, setActiveTab] = useState<
-    "dashboard" | "team" | "volunteer" | "locations"
-  >("dashboard");
+  const [activeTab, setActiveTab] = useState<TabId>("dashboard");
+  const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   const [volunteerDayChoices, setVolunteerDayChoices] = useState<DayCode[]>([
     "mon",
     "fri",
@@ -638,6 +650,7 @@ const ShiftPlanner = () => {
     color: "#10b981",
   });
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const nameInputRef = useRef<HTMLInputElement>(null);
   const [isEditVolunteerOpen, setIsEditVolunteerOpen] = useState(false);
   const [volunteerForm, setVolunteerForm] = useState<
     { name: string; color: string; volunteerDays: DayCode[] }
@@ -699,6 +712,7 @@ const ShiftPlanner = () => {
 
     if (!formValues.name.trim()) {
       setFormError("Inserisci un nome completo per la nuova risorsa.");
+      nameInputRef.current?.focus();
       return;
     }
 
@@ -825,6 +839,22 @@ const ShiftPlanner = () => {
     }
   };
 
+  // Arrow-key navigation between tabs (WAI-ARIA tabs pattern).
+  const handleTabKeyDown = (event: KeyboardEvent) => {
+    const index = TABS.findIndex((tab) => tab.id === activeTab);
+    let next = index;
+    if (event.key === "ArrowRight") next = (index + 1) % TABS.length;
+    else if (event.key === "ArrowLeft") {
+      next = (index - 1 + TABS.length) % TABS.length;
+    } else if (event.key === "Home") next = 0;
+    else if (event.key === "End") next = TABS.length - 1;
+    else return;
+    event.preventDefault();
+    const tab = TABS[next];
+    setActiveTab(tab.id);
+    tabRefs.current[tab.id]?.focus();
+  };
+
   const triggerDownload = (filename: string, content: string) => {
     const blob = new Blob([content], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -905,39 +935,40 @@ const ShiftPlanner = () => {
           weekend, la cadenza 3/4 giorni e i vincoli di riposo.
         </p>
       </section>
-      <div class="chips" style="justify-content: flex-start;">
-        <button
-          type="button"
-          class={`chip ${activeTab === "dashboard" ? "chip--active" : ""}`}
-          onClick={() => setActiveTab("dashboard")}
-        >
-          Dashboard
-        </button>
-        <button
-          type="button"
-          class={`chip ${activeTab === "team" ? "chip--active" : ""}`}
-          onClick={() => setActiveTab("team")}
-        >
-          Team
-        </button>
-        <button
-          type="button"
-          class={`chip ${activeTab === "volunteer" ? "chip--active" : ""}`}
-          onClick={() => setActiveTab("volunteer")}
-        >
-          Profilo volontario
-        </button>
-        <button
-          type="button"
-          class={`chip ${activeTab === "locations" ? "chip--active" : ""}`}
-          onClick={() => setActiveTab("locations")}
-        >
-          Sedi operative
-        </button>
+      <div
+        class="chips"
+        style="justify-content: flex-start;"
+        role="tablist"
+        aria-label="Sezioni del pianificatore"
+        onKeyDown={handleTabKeyDown}
+      >
+        {TABS.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            id={`tab-${tab.id}`}
+            aria-selected={activeTab === tab.id}
+            aria-controls={`panel-${tab.id}`}
+            tabIndex={activeTab === tab.id ? 0 : -1}
+            ref={(el) => {
+              tabRefs.current[tab.id] = el;
+            }}
+            class={`chip ${activeTab === tab.id ? "chip--active" : ""}`}
+            onClick={() => setActiveTab(tab.id)}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       {activeTab === "dashboard" && (
-        <section class="schedule-grid">
+        <section
+          class="schedule-grid"
+          role="tabpanel"
+          id="panel-dashboard"
+          aria-labelledby="tab-dashboard"
+        >
           <section class="panel">
             <header class="panel__header">
               <div>
@@ -950,21 +981,26 @@ const ShiftPlanner = () => {
             </header>
 
             <div class="input-stack">
-              <label>
-                Data di inizio ciclo
+              <div class="field">
+                <label for="start-date">Data di inizio ciclo</label>
                 <input
+                  id="start-date"
                   type="date"
                   value={startDate}
+                  aria-describedby={`start-date-hint${
+                    generationError ? " generation-error" : ""
+                  }`}
+                  aria-invalid={generationError ? true : undefined}
                   onInput={(event) =>
                     setStartDate(
                       (event.currentTarget as HTMLInputElement).value,
                     )}
                 />
-                <span class="tagline">
+                <span class="tagline" id="start-date-hint">
                   Deve coincidere con un lunedi per rispettare la cadenza
                   alternata.
                 </span>
-              </label>
+              </div>
 
               <div class="inline-actions">
                 <button
@@ -982,21 +1018,33 @@ const ShiftPlanner = () => {
                   Pulisci risultati
                 </button>
               </div>
-              {generationError && <div class="alert">{generationError}</div>}
+              {generationError && (
+                <div class="alert" role="alert" id="generation-error">
+                  {generationError}
+                </div>
+              )}
             </div>
           </section>
 
           <section class="panel">
-            <h3 class="panel__title">Cadenza volontario</h3>
-            <p class="panel__subtitle">
+            <h2 class="panel__title" id="volunteer-cadence-title">
+              Cadenza volontario
+            </h2>
+            <p class="panel__subtitle" id="volunteer-cadence-desc">
               Seleziona fino a tre giorni lavorativi a settimana per VOL
               (Lun/Mer/Ven).
             </p>
-            <div class="chips">
+            <div
+              class="chips"
+              role="group"
+              aria-labelledby="volunteer-cadence-title"
+              aria-describedby="volunteer-cadence-desc volunteer-cadence-note"
+            >
               {VOLUNTEER_DAYS.map((option) => (
                 <button
                   key={option.code}
                   type="button"
+                  aria-pressed={volunteerDayChoices.includes(option.code)}
                   class={`chip ${
                     volunteerDayChoices.includes(option.code)
                       ? "chip--active"
@@ -1017,7 +1065,7 @@ const ShiftPlanner = () => {
                 Seleziona tutti i giorni
               </button>
             </div>
-            <p class="tagline muted">
+            <p class="tagline muted" id="volunteer-cadence-note">
               Il volontario deve coprire almeno due giorni, ma puo lavorare
               anche in tutti e tre.
             </p>
@@ -1033,7 +1081,9 @@ const ShiftPlanner = () => {
                 </p>
               </div>
               {assignmentCoverage !== null && (
-                <span class="pill">{assignmentCoverage}% copertura</span>
+                <span class="pill" role="status">
+                  {assignmentCoverage}% copertura
+                </span>
               )}
             </header>
 
@@ -1085,13 +1135,13 @@ const ShiftPlanner = () => {
                       <table class="schedule-table">
                         <thead>
                           <tr>
-                            <th>Dipendente</th>
-                            <th>Qualifica</th>
-                            <th>Settimana 1</th>
-                            <th>Settimana 2</th>
-                            <th>Settimana 3</th>
-                            <th>Settimana 4</th>
-                            <th>Totale</th>
+                            <th scope="col">Dipendente</th>
+                            <th scope="col">Qualifica</th>
+                            <th scope="col">Settimana 1</th>
+                            <th scope="col">Settimana 2</th>
+                            <th scope="col">Settimana 3</th>
+                            <th scope="col">Settimana 4</th>
+                            <th scope="col">Totale</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1152,12 +1202,12 @@ const ShiftPlanner = () => {
                         <table class="schedule-table">
                           <thead>
                             <tr>
-                              <th>Giorno</th>
-                              <th>Sede</th>
-                              <th>Turno</th>
-                              <th>Autista</th>
-                              <th>RPCO</th>
-                              <th>Note</th>
+                              <th scope="col">Giorno</th>
+                              <th scope="col">Sede</th>
+                              <th scope="col">Turno</th>
+                              <th scope="col">Autista</th>
+                              <th scope="col">RPCO</th>
+                              <th scope="col">Note</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -1270,7 +1320,7 @@ const ShiftPlanner = () => {
           {result && (
             result?.alerts.length
               ? (
-                <div class="alerts" style="margin-top: 12px;">
+                <div class="alerts" style="margin-top: 12px;" role="status">
                   {result.alerts.map((alert) => (
                     <div class="alert" key={alert}>
                       {alert}
@@ -1279,7 +1329,7 @@ const ShiftPlanner = () => {
                 </div>
               )
               : (
-                <p class="tagline muted" style="margin-top: 12px;">
+                <p class="tagline muted" style="margin-top: 12px;" role="status">
                   Nessuna eccezione di conformita rilevata per la configurazione
                   attuale.
                 </p>
@@ -1289,9 +1339,14 @@ const ShiftPlanner = () => {
       )}
 
       {activeTab === "team" && (
-        <section class="schedule-grid">
+        <section
+          class="schedule-grid"
+          role="tabpanel"
+          id="panel-team"
+          aria-labelledby="tab-team"
+        >
           <div class="panel">
-            <h3 class="panel__title">Aggiungi risorsa</h3>
+            <h2 class="panel__title">Aggiungi risorsa</h2>
             <p class="panel__subtitle">
               Crea un nuovo dipendente tramite modal dedicata.
             </p>
@@ -1333,11 +1388,25 @@ const ShiftPlanner = () => {
               id="add-employee-form"
               class="input-stack"
               onSubmit={handleAddEmployee}
+              noValidate
             >
+              <p class="tagline">
+                I campi contrassegnati con <span aria-hidden="true">*</span>
+                <span class="sr-only">asterisco</span> sono obbligatori.
+              </p>
               <label>
-                Nome completo
+                <span>
+                  Nome completo <span aria-hidden="true">*</span>
+                </span>
                 <input
+                  ref={nameInputRef}
                   type="text"
+                  name="name"
+                  autocomplete="off"
+                  required
+                  aria-required="true"
+                  aria-invalid={formError ? true : undefined}
+                  aria-describedby={formError ? "add-employee-error" : undefined}
                   value={formValues.name}
                   placeholder="es. Taylor Morgan"
                   onInput={(event) =>
@@ -1403,22 +1472,34 @@ const ShiftPlanner = () => {
                   <option value="1">Inizia con settimana da 4 giorni</option>
                 </select>
               </label>
-              {formError && <div class="alert">{formError}</div>}
+              {formError && (
+                <div class="alert" role="alert" id="add-employee-error">
+                  {formError}
+                </div>
+              )}
             </form>
           </Modal>
 
           <div class="panel">
-            <h3 class="panel__title">Squadra principale ({coreTeam.length})</h3>
+            <h2 class="panel__title">Squadra principale ({coreTeam.length})</h2>
             <p class="panel__subtitle">
               Consigliati 12 dipendenti principali. Regola cadenza e rotazione
               qui.
             </p>
             <div class="list">
               {coreTeam.map((member) => (
-                <div class="list-item" key={member.id}>
+                <div
+                  class="list-item"
+                  key={member.id}
+                  role="group"
+                  aria-labelledby={`member-${member.id}-name`}
+                >
                   <div class="list-item__row">
                     <div>
-                      <div class="list-item__title">
+                      <div
+                        class="list-item__title"
+                        id={`member-${member.id}-name`}
+                      >
                         <span
                           class="color-dot"
                           style={`background: ${member.color ?? "#64748b"};`}
@@ -1450,6 +1531,7 @@ const ShiftPlanner = () => {
                       class="button button--ghost"
                       type="button"
                       onClick={() => removeEmployee(member.id)}
+                      aria-label={`Rimuovi ${member.name}`}
                     >
                       Rimuovi
                     </button>
@@ -1521,9 +1603,14 @@ const ShiftPlanner = () => {
       )}
 
       {activeTab === "volunteer" && volunteer && (
-        <section class="schedule-grid">
+        <section
+          class="schedule-grid"
+          role="tabpanel"
+          id="panel-volunteer"
+          aria-labelledby="tab-volunteer"
+        >
           <div class="panel">
-            <h3 class="panel__title">Profilo volontario</h3>
+            <h2 class="panel__title">Profilo volontario</h2>
             <div class="list-item">
               <div class="list-item__row">
                 <div>
@@ -1587,6 +1674,8 @@ const ShiftPlanner = () => {
                 Nome volontario
                 <input
                   type="text"
+                  name="volunteer-name"
+                  autocomplete="off"
                   value={volunteerForm.name}
                   onInput={(event) =>
                     setVolunteerForm((prev) => ({
@@ -1607,13 +1696,19 @@ const ShiftPlanner = () => {
                     }))}
                 />
               </label>
-              <label>
-                Giorni disponibili
-                <div class="chips" style="margin-top: 8px;">
+              <fieldset
+                class="fieldset"
+                aria-describedby="volunteer-days-hint"
+              >
+                <legend>Giorni disponibili</legend>
+                <div class="chips">
                   {VOLUNTEER_DAYS.map((option) => (
                     <button
                       key={option.code}
                       type="button"
+                      aria-pressed={volunteerForm.volunteerDays.includes(
+                        option.code,
+                      )}
                       class={`chip ${
                         volunteerForm.volunteerDays.includes(option.code)
                           ? "chip--active"
@@ -1645,19 +1740,24 @@ const ShiftPlanner = () => {
                     </button>
                   ))}
                 </div>
-                <span class="tagline">
+                <span class="tagline" id="volunteer-days-hint">
                   Seleziona almeno due giorni lavorativi (Lun/Mer/Ven).
                 </span>
-              </label>
+              </fieldset>
             </form>
           </Modal>
         </section>
       )}
 
       {activeTab === "locations" && (
-        <section class="schedule-grid">
+        <section
+          class="schedule-grid"
+          role="tabpanel"
+          id="panel-locations"
+          aria-labelledby="tab-locations"
+        >
           <div class="panel">
-            <h3 class="panel__title">Sedi operative</h3>
+            <h2 class="panel__title">Sedi operative</h2>
             <p class="panel__subtitle">
               Personalizza le etichette mostrate nella tabella dei turni.
             </p>
